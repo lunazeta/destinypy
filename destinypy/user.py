@@ -1,4 +1,4 @@
-from src.destinypy.requester import GET
+from destinypy.requester import GET
 
 APIKEY = None
 
@@ -376,7 +376,38 @@ class EmailSettings():
         self.subscriptionDefinitions = subscriptionDefinitions
         self.views = views
 
-def GetBungieNetUserById(id: int | str, apiKey) -> GeneralUser:
-    response = GET(f"https://www.bungie.net/Platform/User/GetBungieNetUserById/{id}/", headers={"X-API-Key": apiKey})
+class PlatformDisplayNames():
+
+    @staticmethod
+    def createFromJson(platformNamesJson: dict):
+        parameters = [i for i in range(1,7)]
+        for i in parameters:
+            if i not in platformNamesJson:
+                platformNamesJson[i] = None
+        return PlatformDisplayNames(*[platformNamesJson[i] for i in range(1,7)])
+
+    def __init__(self, 
+        xboxName: str| None,
+        psnName: str | None,
+        steamName: str | None,
+        blizzardName: str | None,
+        stadiaName: str | None,
+        egsName: str | None
+    ):
+        self.xboxName = xboxName
+        self.psnName = psnName
+        self.steamName = steamName
+        self.blizzardName = blizzardName
+        self.stadiaName = stadiaName
+        self.egsName = egsName
+
+def GetBungieNetUserById(membershipId: int | str, apiKey: str) -> GeneralUser:
+    response = GET(f"https://www.bungie.net/Platform/User/GetBungieNetUserById/{membershipId}/", headers={"X-API-Key": apiKey})
     generalUserJson = response["Response"]
     return GeneralUser.createFromJson(generalUserJson)
+
+def GetSanitizedPlatformDisplayNames(membershipId: int | str, apiKey: str):
+    response = GET(f"https://www.bungie.net/Platform/User/GetSanitizedPlatformDisplayNames/{membershipId}/", headers={"X-API-Key": apiKey})
+    platformNamesJson = response["Response"]
+    return PlatformDisplayNames.createFromJson(platformNamesJson)
+
