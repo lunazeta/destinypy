@@ -1,5 +1,7 @@
 from destinypy.requester import GET
 
+# Everything to do with bungie.net users
+
 APIKEY = None
 
 class UserMembership():
@@ -64,7 +66,6 @@ class UserToUserContext():
         self.globalIgnoreEndDate = globalIgnoreEndDate
 
 class GeneralUser():
-
     @staticmethod
     def createFromJson(generalUserJson: dict):
         parameters = [
@@ -107,44 +108,7 @@ class GeneralUser():
         for i in parameters:
             if i not in generalUserJson:
                 generalUserJson[i] = None
-        return GeneralUser(
-            generalUserJson["membershipId"],
-            generalUserJson["uniqueName"], 
-            generalUserJson["normalizedName"],
-            generalUserJson["displayName"],
-            generalUserJson["profilePicture"],
-            generalUserJson["profileTheme"],
-            generalUserJson["userTitle"],
-            generalUserJson["successMessageFlags"],
-            generalUserJson["isDeleted"],
-            generalUserJson["about"],
-            generalUserJson["firstAccess"],
-            generalUserJson["lastUpdate"],
-            generalUserJson["legacyPortalUID"],
-            generalUserJson["context"],
-            generalUserJson["psnDisplayName"],
-            generalUserJson["xboxDisplayName"],
-            generalUserJson["fbDisplayName"],
-            generalUserJson["showActivity"],
-            generalUserJson["locale"],
-            generalUserJson["localeInheritDefault"],
-            generalUserJson["lastBanReportId"],
-            generalUserJson["showGroupMessaging"],
-            generalUserJson["profilePicturePath"],
-            generalUserJson["profilePictureWidePath"],
-            generalUserJson["profileThemeName"],
-            generalUserJson["userTitleDisplay"],
-            generalUserJson["statusText"],
-            generalUserJson["statusDate"],
-            generalUserJson["profileBanExpire"],
-            generalUserJson["blizzardDisplayName"],
-            generalUserJson["steamDisplayName"],
-            generalUserJson["stadiaDisplayName"],
-            generalUserJson["twitchDisplayName"],
-            generalUserJson["cachedBungieGlobalDisplayName"],
-            generalUserJson["cachedBungieGlobalDisplayNameCode"],
-            generalUserJson["egsDisplayName"]
-        )
+        return GeneralUser(*[generalUserJson[i] for i in parameters])
 
     def __init__(self,
         membershipId: int,
@@ -236,9 +200,17 @@ class GetCredentialTypesForAccountResponse():
 
 class UserMembershipData():
 
+    @staticmethod
+    def createFromJson(userMembershipJson: dict):
+        if "primaryMembershipId" not in userMembershipJson:
+            userMembershipJson["primaryMembershipId"] = None
+
+        return UserMembershipData("TODO", userMembershipJson["primaryMembershipId"], GeneralUser.createFromJson(userMembershipJson["bungieNetUser"])) #TODO
+        
+
     def __init__(self,
         destinyMemberships, #TODO
-        primaryMembershipId: int,
+        primaryMembershipId: int | None,
         bungieNetUser: GeneralUser
     ):
         self.destinyMemberships = destinyMemberships
@@ -401,13 +373,23 @@ class PlatformDisplayNames():
         self.stadiaName = stadiaName
         self.egsName = egsName
 
-def GetBungieNetUserById(membershipId: int | str, apiKey: str) -> GeneralUser:
+def GetBungieNetUserById(membershipId: str, apiKey: str) -> GeneralUser:
     response = GET(f"https://www.bungie.net/Platform/User/GetBungieNetUserById/{membershipId}/", headers={"X-API-Key": apiKey})
     generalUserJson = response["Response"]
     return GeneralUser.createFromJson(generalUserJson)
 
-def GetSanitizedPlatformDisplayNames(membershipId: int | str, apiKey: str):
+def GetSanitizedPlatformDisplayNames(membershipId: str, apiKey: str) -> PlatformDisplayNames:
     response = GET(f"https://www.bungie.net/Platform/User/GetSanitizedPlatformDisplayNames/{membershipId}/", headers={"X-API-Key": apiKey})
     platformNamesJson = response["Response"]
     return PlatformDisplayNames.createFromJson(platformNamesJson)
 
+# Identical to Bungie's GetCredentialTypesForTargetAccount
+# Integers returned correspond to the membership type (see https://bungie-net.github.io/multi/schema_BungieCredentialType.html#schema_BungieCredentialType)
+def GetMembershipTypes(membershipId: str, apiKey: str) -> list[int]:
+    response = GET(f"https://www.bungie.net/Platform/User/GetCredentialTypesForTargetAccount/{membershipId}/", headers={"X-API-Key": apiKey})
+    return [i["credentialType"] for i in response["Response"]]
+
+def GetMembershipDataById(membershipId: str, membershipType: str, apiKey: str) -> UserMembershipData:
+    response = GET(f"https://www.bungie.net/Platform/User/GetMembershipsById/{membershipId}/{membershipType}/", headers={"X-API-Key": apiKey})
+    userMembershipJson = response["Response"]
+    return UserMembershipData.createFromJson(userMembershipJson)
