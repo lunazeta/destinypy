@@ -38,6 +38,26 @@ class CrossSaveUserMembership(UserMembership):
 
 class UserInfoCard(CrossSaveUserMembership):
 
+    def createFromJson(userInfoCardJson):
+        parameters = [
+            "supplementalDisplayName",
+            "iconPath",
+            "crossSaveOverride",
+            "applicableMembershipTypes",
+            "isPublic",
+            "membershipType",
+            "membershipId",
+            "displayName",
+            "bungieGlobalDisplayName",
+            "bungieGlobalDisplayNameCode"
+        ]
+        
+        for i in parameters:
+            if i not in userInfoCardJson:
+                userInfoCardJson[i] = None
+
+        return UserInfoCard(*[userInfoCardJson[i] for i in parameters])
+
     def __init__(self,
         supplementalDisplayName: str,
         iconPath: str,
@@ -245,6 +265,21 @@ class HardLinkedUserMembership():
 
 class UserSearchResponseDetail():
 
+    def createFromJson(usrDetailJson):
+        parameters = [
+            "bungieGlobalDisplayName",
+            "bungieGlobalDisplayNameCode",
+            "bungieNetMembershipId",
+            "destinyMemberships"
+        ]
+        for i in parameters:
+            if i not in usrDetailJson:
+                usrDetailJson[i] = None
+        
+        for i in enumerate(usrDetailJson["destinyMemberships"]):
+            usrDetailJson["destinyMemberships"][i[0]] = UserInfoCard.createFromJson(i[1])
+
+
     def __init__(self,
         bungieGlobalDisplayName: str,
         bungieGlobalDisplayNameCode: int | None,
@@ -268,6 +303,8 @@ class UserSearchResponse():
         for i in parameters:
             if i not in userSearchResponseJson:
                 userSearchResponseJson[i] = None
+        for i in enumerate(userSearchResponseJson["searchResults"]):
+            userSearchResponseJson["searchResults"][i[0]] = UserSearchResponseDetail.createFromJson(i[1])
         return UserSearchResponse(*[userSearchResponseJson[i] for i in parameters])
 
     def __init__(self,
