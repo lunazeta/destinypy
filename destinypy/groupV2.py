@@ -1,5 +1,6 @@
 from destinypy import user
 from destinypy import queries
+from destinypy import exceptions
 # Clans, etc.
 
 class ClanBanner():
@@ -252,3 +253,55 @@ class GroupSearchResponse():
         self.query = query
         self.replacementContinuationToken = replacementContinuationToken
         self.useTotalResults = useTotalResults
+
+class GroupQuery():
+
+    def __init__(self,
+        name: str,
+        groupType: int,
+        creationDate: int,
+        sortBy: int,
+        groupMemberCountFilter: int | None,
+        localeFilter: str | None,
+        tagText: str | None,
+        itemsPerPage: int,
+        currentPage: int,
+        requestContinuationToken: str
+    ):
+        if groupType == 1 and (groupMemberCountFilter or localeFilter or tagText):
+            raise exceptions.InvalidClanQuery("groupMemberCountFilter, localeFilter, and tagText should be of type None if the group is a Destiny 2 clan")
+        
+        self.name = name
+        self.groupType = groupType
+        self.creationDate = creationDate
+        self.sortBy = sortBy
+        self.groupMemberCountFilter = groupMemberCountFilter
+        self.localeFilter = localeFilter
+        self.tagText = tagText
+        self.itemsPerPage = itemsPerPage
+        self.currentPage = currentPage
+        self.requestContinuationToken = requestContinuationToken
+
+class GroupNameSearchRequest():
+
+    def __init__(self,
+        groupName: str,
+        groupType: int
+    ):
+        self.groupName = groupName
+        self.groupType = groupType
+
+class GroupOptionalConversation():
+
+    def __init__(self,
+        groupId: int,
+        conversationId: int,
+        chatEnabled: bool,
+        chatName: str,
+        chatSecurity: int
+    ):
+        self.groupId = groupId
+        self.conversationId = conversationId
+        self.chatEnabled = chatEnabled
+        self.chatName = chatName
+        self.chatSecurity = chatSecurity
