@@ -1,4 +1,4 @@
-from destinypy.requester import GET
+from destinypy.requester import GET, POST
 
 # Everything to do with bungie.net users
 
@@ -218,6 +218,19 @@ class UserMembershipData():
         self.bungieNetUser = bungieNetUser
 
 class HardLinkedUserMembership():
+    
+    @staticmethod
+    def createFromJson(hluMembershipJson: dict):
+        parameters = [
+            "membershipType",
+            "membershipId",
+            "CrossSaveOverriddenType",
+            "CrossSaveOverriddenMembershipId"
+        ]
+        for i in parameters:
+            if i not in hluMembershipJson:
+                hluMembershipJson[i] = None
+        return HardLinkedUserMembership(*[hluMembershipJson[i] for i in parameters])
 
     def __init__(self,
         membershipType: int,
@@ -244,6 +257,18 @@ class UserSearchResponseDetail():
         self.destinyMemberships = destinyMemberships
 
 class UserSearchResponse():
+
+    @staticmethod
+    def createFromJson(userSearchResponseJson: dict):
+        parameters = [
+            "searchResults",
+            "page",
+            "hasMore"
+        ]
+        for i in parameters:
+            if i not in userSearchResponseJson:
+                userSearchResponseJson[i] = None
+        return UserSearchResponse(*[userSearchResponseJson[i] for i in parameters])
 
     def __init__(self,
         searchResults: list[UserSearchResponseDetail],
@@ -393,3 +418,18 @@ def GetMembershipDataById(membershipId: str, membershipType: str, apiKey: str) -
     response = GET(f"https://www.bungie.net/Platform/User/GetMembershipsById/{membershipId}/{membershipType}/", headers={"X-API-Key": apiKey})
     userMembershipJson = response["Response"]
     return UserMembershipData.createFromJson(userMembershipJson)
+
+# This is OAuth TODO
+def GetMembershipDataForCurrentUser():
+    pass
+
+# Bungie API only supports Steam ids for this
+def GetUserFromSteamId(steamId: str, apiKey: str) -> HardLinkedUserMembership:
+    response = GET(f"https://www.bungie.net/Platform/User/GetMembershipFromHardLinkedCredential/12/{steamId}/", headers={"X-API-Key": apiKey})
+    hluMembershipJson = response["Response"]
+    return HardLinkedUserMembership.createFromJson(hluMembershipJson)
+
+def SearchByGlobalName(page: int | str, displayNamePrefix: str, apiKey: str):
+    response = POST(f"https://www.bungie.net/Platform/User/Search/GlobalName/{page}/", data={"displayNamePrefix": displayNamePrefix}, headers={"X-API-Key": apiKey})
+    userSearchResponseJson = response["Response"]
+    return UserSearchResponse.createFromJson(userSearchResponseJson)
