@@ -2,4 +2,3 @@ test user.GetMembershipTypes
 test user.GetMembershipDataById
 test.GetUserFromSteamId
 test user.SearchByGlobalName
-test exceptions
